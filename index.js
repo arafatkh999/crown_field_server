@@ -30,9 +30,14 @@ async function run() {
 
 
     const reviewsCollection = client.db("crownDb").collection("reviews");
+    const instructorsCollection = client.db("crownDb").collection("instructors");
 
     app.get('/reviews', async(req, res) =>{
         const result = await reviewsCollection.find().toArray();
+        res.send(result);
+    })
+    app.get('/instructors', async(req, res) =>{
+        const result = await instructorsCollection.find().toArray();
         res.send(result);
     })
     // Send a ping to confirm a successful connection
