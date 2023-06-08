@@ -32,6 +32,7 @@ async function run() {
     const reviewsCollection = client.db("crownDb").collection("reviews");
     const instructorsCollection = client.db("crownDb").collection("instructors");
     const classesCollection = client.db("crownDb").collection("classes");
+    const cartCollection = client.db("crownDb").collection("carts");
 
     app.get('/reviews', async(req, res) =>{
         const result = await reviewsCollection.find().toArray();
@@ -44,6 +45,13 @@ async function run() {
     app.get('/classes', async(req, res) =>{
         const result = await classesCollection.find().toArray();
         res.send(result);
+    })
+
+    //cart collection
+    app.post('/carts', async(req,res)=>{
+      const items = req.body;
+      const result = await cartCollection.insertOne(items);
+      res.send(result);
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
