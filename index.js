@@ -33,6 +33,14 @@ async function run() {
     const instructorsCollection = client.db("crownDb").collection("instructors");
     const classesCollection = client.db("crownDb").collection("classes");
     const cartCollection = client.db("crownDb").collection("carts");
+    const usersCollection = client.db("crownDb").collection("users");
+
+
+    app.post('/users', async(req, res)=>{
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
 
     app.get('/reviews', async(req, res) =>{
         const result = await reviewsCollection.find().toArray();
