@@ -168,7 +168,7 @@ async function run() {
         const result = await classesCollection.find(query).toArray();
         res.send(result);
     })
-    app.get('/allclasses', async(req, res) =>{
+    app.get('/allclasses', verifyJWT, verifyAdmin, async(req, res) =>{
         const result = await classesCollection.find().toArray();
         res.send(result);
     })
