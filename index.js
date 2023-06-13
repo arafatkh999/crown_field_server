@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
 require('dotenv').config();
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000;
 
 
@@ -52,6 +53,7 @@ async function run() {
     const classesCollection = client.db("crownDb").collection("classes");
     const cartCollection = client.db("crownDb").collection("carts");
     const usersCollection = client.db("crownDb").collection("users");
+    const paymentCollection = client.db("crownDb").collection("payments");
 
 
     app.post('/jwt', (req, res)=>{
@@ -162,8 +164,38 @@ async function run() {
         res.send(result);
     })
     app.get('/classes', async(req, res) =>{
+        const query = {status:"approved"}
+        const result = await classesCollection.find(query).toArray();
+        res.send(result);
+    })
+    app.get('/allclasses', async(req, res) =>{
         const result = await classesCollection.find().toArray();
         res.send(result);
+    })
+
+    app.patch('/classes/:id', async(req, res)=>{
+      const id = req.params.id;
+      const filter = {_id : new ObjectId(id)};
+      const updateDoc = {
+        $inc : {
+          available_seat : parseFloat(-1)
+        }
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    })
+
+    app.get('/userclass', async(req,res)=>{
+      const email = req.query.email;
+      const query = {email : email };
+      const result = await classesCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    app.post('/classes',verifyJWT, verifyInstructor, async(req, res)=>{
+      const newClasses = req.body;
+      const result = await classesCollection.insertOne(newClasses);
+      res.send(result);
     })
 
     //cart collection apis
@@ -194,6 +226,36 @@ async function run() {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
       const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    })
+
+
+    app.get('/payments', async(req, res)=>{
+      const email = req.query.email;
+      const query = {email : email};
+      const result = await paymentCollection.find(query).sort({ date: -1 }).toArray();
+      res.send(result);
+    })
+
+
+    app.post('/create-payment-intent', verifyJWT, async(req, res)=>{
+      const {price} = req.body;
+      const amount = price*100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    })
+
+
+    app.post('/payments', verifyJWT, async(req, res)=>{
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
       res.send(result);
     })
 
